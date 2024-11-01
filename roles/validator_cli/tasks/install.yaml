@@ -1,0 +1,43 @@
+---
+- name: "{{ role_path|basename }} | remove installer"
+  file:
+    path: "/tmp/{{ validator_binary }}"
+    state: absent
+  tags:
+    - cli.install
+
+- name: "{{ role_path|basename }} | create download dir"
+  file:
+    path: "/tmp/{{ validator_binary }}"
+    state: directory
+    owner: "{{ validator_user }}"
+    group: "{{ validator_user }}"
+  tags:
+    - cli.install
+
+- name: "{{ role_path|basename }} | install validator"
+  block:
+    - name: download latest solana release installer
+      get_url:
+        url: "{{ install_script_url }}"
+        dest: "/tmp/{{ validator_binary }}/install"
+        mode: 0755
+
+    - name: run validator installer
+      shell: "/tmp/{{ validator_binary }}/install -d {{ validator_bin_path }} {% if validator_version is defined %}v{{ validator_version }}{% if jito_validator %}-jito{% endif %}{% else %}stable{% endif %}"
+  become: yes
+  environment:
+    SOLANA_RELEASE: "{% if validator_version is defined %}v{{ validator_version }}{% if jito_validator %}-jito{% endif %}{% else %}stable{% endif %}"
+  become_user: "{{ validator_user }}"
+  tags:
+    - cli.install
+
+- name: "{{ role_path|basename }} | remove installer"
+  file:
+    path: "/tmp/{{ validator_binary }}"
+    state: absent
+  tags:
+    - cli.install
+
+
+

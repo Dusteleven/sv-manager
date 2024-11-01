@@ -1,0 +1,67 @@
+---
+- name: Disable old validator services
+  systemd:
+    name: "{{ item.0 }}"
+    state: "{{ item.1 }}"
+    enabled: no
+  ignore_errors: True
+  with_nested:
+    - [ 'solana-validator', 'agave-validator']
+    - [ 'stopped' ]
+  tags:
+    - validator.service
+
+- name: Remove validator systemd service unit file
+  file:
+    path: "/etc/systemd/system/{{ item }}.service"
+    state: absent
+  with_items:
+    - "validator"
+    - "agave-validator"
+    - "solana-validator"
+  tags:
+    - validator.service
+
+- name: Create validator service
+  template:
+    src: validator.service.j2
+    dest: "/lib/systemd/system/validator.service"
+    mode: 0644
+    owner: root
+    group: root
+  tags:
+    - validator.service
+
+- name: Add default environments file
+  template:
+    src: validator-env.j2
+    dest: /etc/default/validator-env
+    mode: 0644
+    owner: root
+    group: root
+  tags:
+    - validator-env.service
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  tags:
+    - validator.service
+
+- name: Enable validator service
+  systemd:
+    name: "validator"
+    enabled: yes
+  tags:
+    - validator.service
+
+- name: Start validator service
+  systemd:
+    name: "validator"
+    state: "{{ item }}"
+  with_items:
+    - "started"
+    - "restarted"
+  tags:
+    - validator.service
+

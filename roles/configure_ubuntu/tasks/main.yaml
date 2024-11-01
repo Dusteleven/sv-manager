@@ -1,14 +1,31 @@
 ---
+#- name: Check if config file exists
+#  stat:
+#    path: /etc/sv_manager/sv_manager.conf
+#  register: config_exists
+#
+- name: Load config
+  include_vars:
+    file: "{{ sv_manager_config_path }}"
+  become: yes
+
 - name: Configure lvm
   import_tasks: lvm.yaml
   when: lvm_enabled|bool
   tags:
     config.lvm
 
-- name: Install additional packages
-  import_tasks: packages.yaml
+- name: Install additional apt packages
+  import_tasks: apt_packages.yaml
   tags:
     - config.packages
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Install additional yum packages
+  import_tasks: yum_packages.yaml
+  tags:
+    - config.packages
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
 - name: Create swap
   import_tasks: swap.yaml
@@ -39,6 +56,11 @@
   tags:
     - config.fail2ban
 
+#- name: Config sysctl
+#  import_tasks: sysctl.yaml
+#  tags:
+#    - config.sysctl
+
 - name: Create ansible user
   import_tasks: ansible_user.yaml
   tags:
@@ -47,7 +69,7 @@
     - "'local' not in group_names"
 
 - name: Create solana user
-  import_tasks: solana_user.yaml
+  import_tasks: validator_user.yaml
   tags:
-    - config.solana_user
+    - config.validator_user
     - validator.service.solana

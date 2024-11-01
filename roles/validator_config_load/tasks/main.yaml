@@ -1,0 +1,5 @@
+---
+
+- name: Load config
+  include_vars:
+    file: "{{ sv_manager_config_path }}"

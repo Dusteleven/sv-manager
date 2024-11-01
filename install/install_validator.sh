@@ -34,6 +34,12 @@ install_validator () {
     exit
   fi
 
+  if [ ! -f "$PATH_TO_VALIDATOR_KEYS/authorized-withdrawer-keypair.json" ] ## && [ "$inventory" = "mainnet.yaml" ]
+  then
+    echo "OOPS! Key $PATH_TO_VALIDATOR_KEYS/authorized-withdrawer-keypair.json not found. Please verify and run the script again. For security reasons we do not create any keys for mainnet."
+    exit
+  fi
+
   read -e -p "Enter new RAM drive size, GB (recommended size: 200GB):" -i "200" RAM_DISK_SIZE
   read -e -p "Enter new server swap size, GB (recommended size: equal to server RAM): " -i "64" SWAP_SIZE
 
@@ -41,10 +47,10 @@ install_validator () {
 
   if [[ $(which apt | wc -l) -gt 0 ]]
   then
-  pkg_manager=apt
+    pkg_manager=apt
   elif [[ $(which yum | wc -l) -gt 0 ]]
   then
-  pkg_manager=yum
+    pkg_manager=yum
   fi
 
   echo "Updating packages..."
@@ -73,7 +79,7 @@ install_validator () {
 
   if [ ! -z $solana_version ]
   then
-    SOLANA_VERSION="--extra-vars {\"solana_version\":\"$solana_version\"}"
+    SOLANA_VERSION="--extra-vars {\"validator_version\":\"$solana_version\"}"
   fi
   if [ ! -z $extra_vars ]
   then
@@ -96,7 +102,7 @@ install_validator () {
   'ramdisk_size_gb': $RAM_DISK_SIZE, \
   }" $SOLANA_VERSION $EXTRA_INSTALL_VARS $TAGS $SKIP_TAGS
 
-  ansible-playbook --connection=local --inventory ./inventory/$inventory --limit localhost  playbooks/pb_install_validator.yaml --extra-vars "@/etc/sv_manager/sv_manager.conf" $SOLANA_VERSION $EXTRA_INSTALL_VARS $TAGS $SKIP_TAGS
+  ansible-playbook --connection=local --inventory ./inventory/$inventory --limit localhost  playbooks/pb_install_validator.yaml --extra-vars "@/etc/sv_manager/sv_manager.conf" $EXTRA_INSTALL_VARS $TAGS $SKIP_TAGS
 
   echo "### 'Uninstall ansible ###"
 
@@ -111,14 +117,19 @@ install_validator () {
 
 }
 
-
 while [ $# -gt 0 ]; do
-
-   if [[ $1 == *"--"* ]]; then
+   case $1 in
+      --*=*)
+        param="${1#--}"
+        param="${param%=*}"
+        value="${1#*=}"
+        declare ${param}="${value}"
+        ;;
+      --* )
         param="${1/--/}"
         declare ${param}="$2"
-  #      echo $1 $2 // Optional to see the parameter:value result
-   fi
+        ;;
+   esac
 
   shift
 done

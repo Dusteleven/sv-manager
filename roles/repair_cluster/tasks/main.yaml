@@ -1,0 +1,86 @@
+---
+
+- name: Load config
+  include_vars:
+    file: "{{ sv_manager_config_path }}"
+
+- name: stop validator service
+  systemd:
+    name: "{{ validator_binary }}"
+    state: stopped
+  tags:
+    - validator.cluster.repair
+    - validator.cluster.repair.service
+    - validator.cluster.repair.service.stop
+
+- name: "install validator {{ validator_version }}"
+  shell: "{{ validator_install_binary }} init -d {{ validator_bin_path }} {{ validator_version }}"
+  environment:
+    PATH: "{{ env_path }}/active_release/bin"
+  become: yes
+  become_user: "{{ validator_user }}"
+  tags:
+    - validator.cluster.repair
+    - validator.cluster.repair.cli.install
+
+- name: clear ledger directory
+  file:
+    path: "{{ ledger_path }}"
+    state: "{{ item }}"
+    mode: '0755'
+    owner: "{{ validator_user }}"
+    group: "{{ validator_user }}"
+  with_items:
+    - absent
+    - directory
+  tags:
+    - validator.cluster.repair
+    - validator.cluster.repair.clear.ledger
+
+#- name: create snapshot from ledger
+#  become: yes
+#  become_user: "{{ validator_user }}"
+#  shell: "solana-ledger-tool --ledger {{ ledger_path }} create-snapshot {{ validator_ledger_slot }} {{ snapshots_path }} --snapshot-archive-path {{ snapshots_path }} --hard-fork {{ validator_ledger_slot }} --wal-recovery-mode skip_any_corrupted_record"
+#  environment:
+#    #PATH: "{{ node.validator_home }}/.local/share/solana/install/active_release/bin"
+#    PATH: "{{ env_path }}/active_release/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+#    HOME: "{{ validator_home }}"
+#  tags:
+#    - validator.cluster.repair
+#    - validator.cluster.repair.ledger.snapshot
+
+- name: Add cluster repair args to service
+  blockinfile:
+    path: /etc/default/solana-validator
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    insertbefore: "VALIDATOR_EXTRA_ARGS"
+    block: |
+        REPAIR_CLUSTER_ARGS="--wait-for-supermajority {{ validator_ledger_slot }} \
+        --expected-shred-version {{ validator_shred_version }} \
+        --expected-bank-hash {{ validator_bank_hash }} \
+        --no-snapshot-fetch"
+  tags:
+    - validator.cluster.repair
+    - validator.cluster.repair.args
+    - validator.cluster.repair.args.add
+
+- name: start solana validator service
+  systemd:
+    name: solana-validator
+    state: started
+    daemon_reload: yes
+  tags:
+    - validator.cluster.repair
+    - validator.cluster.repair.service
+    - validator.cluster.repair.service.start
+
+- name: Remove cluster repair args from service
+  blockinfile:
+    path: /etc/default/solana-validator
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: ""
+    backup: yes
+  tags:
+    - validator.cluster.repair
+    - validator.cluster.repair.args
+    - validator.cluster.repair.args.remove

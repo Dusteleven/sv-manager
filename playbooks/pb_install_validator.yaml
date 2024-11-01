@@ -3,8 +3,18 @@
   hosts: all
   become: yes
   roles:
-    - check_node
-    - configure_ubuntu
-    - solana_cli
-    - solana_validator_bootstrap
+    - name: check_node
+      tags:
+        - check.node
+    - name: configure_ubuntu
+      tags:
+        - configure.os
+    - name: validator_cli
+      tags:
+        - cli
+        - cli.install
+        - cli.update
+    - name: validator_bootstrap
+      tags:
+        - validator_bootstrap
     - monitoring

@@ -4,6 +4,10 @@
   apt_key:
     url: https://repos.influxdata.com/influxdata-archive_compat.key
     state: present
+  register: result
+  retries: 3
+  delay: 10
+  until: result is not failed
   when: ansible_distribution == 'Ubuntu'
   tags:
     - telegraf.install
@@ -36,5 +40,8 @@
   package:
     name: telegraf
     state: present
+  environment:
+    # do not start at the end of install
+    RUNLEVEL: 1
   tags:
     - telegraf.install

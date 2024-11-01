@@ -11,32 +11,39 @@
   tags:
     - telegraf.configure
 
-- name: Allow 'telegraf' user to run solana scripts
+- name: Allow 'telegraf' user to run validator scripts
   lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^telegraf'
-    line: "telegraf ALL=({{ solana_user }}:{{ solana_user }}) NOPASSWD:ALL"
+    line: "telegraf ALL=({{ validator_user }}:{{ validator_user }}) NOPASSWD:ALL"
     validate: 'visudo -cf %s'
   tags:
     - telegraf.configure
 
-- name: Reload systemd
+- name: create telegraf.service.d dir
+  file:
+    path: /etc/systemd/system/telegraf.service.d
+    state: directory
+  tags:
+    - telegraf.configure
+
+- name: Add validator bin path for telegraf unit file
+  template:
+    src: 01-telegraf.conf.j2
+    dest: /etc/systemd/system/telegraf.service.d/01-telegraf.conf
+    mode: 0644
+    owner: root
+    group: root
+    backup: yes
+  tags:
+    - telegraf.configure
+
+- name: Enable and start telegraf service
   systemd:
+    name: telegraf
     daemon_reload: yes
-  tags:
-    - telegraf.start
-
-- name: Enable telegraf service
-  systemd:
-    name: telegraf
     enabled: yes
-  tags:
-    - telegraf.start
-
-- name: Start telegraf service
-  systemd:
-    name: telegraf
     state: restarted
   tags:
     - telegraf.start

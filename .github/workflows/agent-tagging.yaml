@@ -1,0 +1,67 @@
+name: Add tag for agent
+run-name: Add tag for agent
+on:
+  push:
+    branches:
+      - agent
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  git-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Git status
+        run: git status
+      - name: "Get latest tag"
+        id: latest_tag
+        run: echo "latest_tag=$(git tag --merged agent --sort=-v:refname agent-v* | head -1)" >> $GITHUB_ENV
+      - run: | 
+          echo "new_tag=$(echo "${{ env.latest_tag }}" | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}')" >> $GITHUB_ENV
+      - run: | 
+          echo "${{ env.new_tag }}"
+          echo "commit_part=${GITHUB_SHA:0:7}" >> $GITHUB_ENV
+      - run: | 
+          git config --global user.email "${{ github.event.commits[0].author.email }}"
+          git config --global user.name "${{ github.event.commits[0].author.name }}"
+          git tag -d agent-latest
+          git push --delete origin agent-latest
+          git tag agent-latest ${{ env.commit_part }}
+          git tag ${{ env.new_tag }} ${{ env.commit_part }}
+          git push origin agent-latest
+          git push origin ${{ env.new_tag }}
+
+  build-container:
+    runs-on: ubuntu-latest
+    name: Build and Push Docker Image
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.IMAGE_NAME }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:agent-latest
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

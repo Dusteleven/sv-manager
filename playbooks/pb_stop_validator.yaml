@@ -1,9 +1,9 @@
 ---
 
 - name: stop solana validator
-  hosts: "{{ host_hosts | default('remote') }}"
+  hosts: all
   become: yes
   tags:
     - validator.cluster.restart
   roles:
-    - solana_validator_restart
+    - validator_restart

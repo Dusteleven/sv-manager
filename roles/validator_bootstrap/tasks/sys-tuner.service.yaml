@@ -1,0 +1,20 @@
+---
+- name: Create validator-sys-tuner service
+  template:
+    src: validator-sys-tuner.service.j2
+    dest: /etc/systemd/system/validator-sys-tuner.service
+    mode: 0644
+    owner: root
+    group: root
+  tags:
+    validator.service.sys-tuner
+
+- name: validator-sys-tuner service enable and start
+  systemd:
+    name: validator-sys-tuner
+    enabled: yes
+    state: restarted
+    daemon_reload: yes
+  tags:
+    validator.service.sys-tuner
+

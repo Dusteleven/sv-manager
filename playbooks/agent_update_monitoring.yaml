@@ -1,0 +1,8 @@
+---
+- name: Update monitoring
+  hosts: all
+  become: yes
+  roles:
+    - validator_config_load
+    - vars_shortcode_mapping
+    - monitoring

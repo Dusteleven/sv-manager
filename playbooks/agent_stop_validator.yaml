@@ -1,0 +1,13 @@
+---
+
+- name: stop validator
+  hosts: all
+  become: yes
+  vars_files:
+    - ../vars/{{ val_prj }}.yaml
+  tags:
+    - validator.cluster.stop
+  roles:
+    - validator_config_load
+    - vars_shortcode_mapping
+    - validator_service_stop

@@ -14,21 +14,16 @@
   tags:
     - config.firewall
 
-- name: allow ingress ssh
-  ufw:
-    rule: allow
-    port: ssh
-    proto: tcp
-    direction: in
-  tags:
-    - config.firewall
-
-- name: allow rpc ingress port
+- name: allow tcp ports
   ufw:
     rule: allow
     proto: tcp
     direction: in
-    port: '{{ solana_rpc_port }}'
+    port: '{{ item }}'
+  loop:
+    - "ssh"
+    - "{{ validator_rpc_port }}"
+    - "{{ open_validator_ports_start }}:{{ open_validator_ports_end }}"
   tags:
     - config.firewall
 
@@ -37,16 +32,7 @@
     rule: allow
     proto: udp
     direction: in
-    port: '{{ open_solana_ports_start }}:{{ open_solana_ports_end }}'
-  tags:
-    - config.firewall
-
-- name: allow ingress solana tcp ports
-  ufw:
-    rule: allow
-    proto: tcp
-    direction: in
-    port: '{{ open_solana_ports_start }}:{{ open_solana_ports_end }}'
+    port: '{{ open_validator_ports_start }}:{{ open_validator_ports_end }}'
   tags:
     - config.firewall
 

@@ -2,7 +2,7 @@
 set_validator_info: False
 cluster_environment: 'testnet'
 cluster_rpc_address: 'https://api.testnet.solana.com'
-solana_validator_service: started
+validator_service: restarted
 entrypoints:
   - entrypoint.testnet.solana.com:8001
   - entrypoint2.testnet.solana.com:8001
@@ -13,11 +13,28 @@ known_validators:
   - Ft5fbkqNa76vnsjYNwjDZUXoTWpP7VYm3mtsaQckQADN
   - eoKpUABi59aT4rR9HGS3LcMecfut9x7zJyodWWP43YQ
   - 9QxCLckBiJc783jnMvXZubK4wH86Eqqvashtrwvcsgkv
-solana_metrics_url: 'https://metrics.solana.com:8086,db=tds,u=testnet_write,p=c4fa841aa918bf8274e3e2a44d77568d9861b3ea'
+validator_metrics_url: 'https://metrics.solana.com:8086,db=tds,u=testnet_write,p=c4fa841aa918bf8274e3e2a44d77568d9861b3ea'
 expected_genesis_hash: '4uhcVJyU9pJkvQyS88uRDiswHXSCkY3zQawwpjk2NsNY'
 limit_ledger_size: 50000000
+snapshot_interval_slots: 500
 maximum_local_snapshot_age: 1000
+validator_version: 1.18.17
+extra_params: []
+
+validator_ledger_slot: 179526403
+validator_shred_version: 56177
+validator_bank_hash: 69p75jzzT1P2vJwVn3wbTVutxHDcWKAgcbjqXvwCVUDE
+
+jito_urls:
+  newyork:
+    block_engine: "https://nyc.testnet.block-engine.jito.wtf"
+    relayer: "http://nyc.testnet.relayer.jito.wtf:8100"
+    shred_receiver_addr: "136.144.58.40:1002"
+  dallas:
+    block_engine: "https://dallas.testnet.block-engine.jito.wtf"
+    relayer: "http://dallas.testnet.relayer.jito.wtf:8100"
+    shred_receiver_addr: "147.28.154.132:1002"
 solana_version: 1.18.17
 jito_version: 1.18.17
-agave_version: 2.0.3 
+agave_version: 2.0.3
 extra_params:

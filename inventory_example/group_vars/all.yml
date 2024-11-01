@@ -1,17 +1,20 @@
 ---
 
+sv_manager_config_path: "/etc/sv_manager/sv_manager.conf"
+
 #backward compatibility
 old_swap_file: "/mnt/swap/swapfile"
 old_ramdisk_path: /mnt/ramdisk
 
 # users:
-solana_user: 'solana'
+validator_user: 'solana'
 ansible_user: 'root'
 
 #all:
-accounts_path: "{{ ramdisk_path }}/accounts"
+accounts_path: "{{ mount_base_path }}/accounts"
+accounts_hash_cache_path: "{{ ramdisk_path }}/accounts_hash_cache"
 use_firewall: True
-env_path: "{{ solana_home }}/.local/share/solana/install/active_release/bin"
+env_path: "{{ validator_app_path }}/active_release/bin"
 fail_if_no_validator_keypair: True
 flat_path: True
 incremental_snapshot_interval_slots: 2500
@@ -24,20 +27,74 @@ lvm_vg: 'vg00'
 mount_base_path: '/mnt/solana'
 max_delinquent_stake: 5
 name: "{{ inventory_hostname }}"
-open_solana_ports_start: 8000
-open_solana_ports_end: 10000
+open_validator_ports_start: 8000
+open_validator_ports_end: 10000
 ramdisk_path: "{{ mount_base_path }}/ramdisk"
-ramdisk_size_gb: 200
+ramdisk_size_gb: 0
 rpc_node: False
 set_validator_info: False
-secrets_path: "/home/{{ solana_user }}/.secrets"
+secrets_path: "{{ validator_home }}/.secrets"
 snapshots_path: "{{ mount_base_path }}/snapshots"
-solana_home: "/home/{{ solana_user }}"
-solana_rpc_port: 8899
+validator_home: "/home/{{ validator_user }}"
+validator_app_path: "{{ validator_home }}/app"
+validator_rpc_port: 8899
+validator_gossip_port: 8001
 swap_file_size_gb: 64
 upload_validator_keys: True
 validator_name: "{{ inventory_hostname }}"
 validator_log_path: "{{ mount_base_path }}/log"
+index_excluded_keys:
+  - kinXdEcpDQeHPEuQnqmUgtYykqKGVFq6CeVX5iAHJq6
+  - TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA
+with_snapshot_finder: False
+
+#sysctl params
+sysctl_params:
+  # Params from sys-tuner
+  net.core.rmem_default: 134217728
+  net.core.rmem_max: 134217728
+  net.core.wmem_default: 134217728
+  net.core.wmem_max: 134217728
+  # Increase memory mapped files limit
+  vm.max_map_count: 1024000
+  # Increase number of allowed open file descriptors
+  fs.nr_open: 1024000
+  # =====================
+  net.ipv4.tcp_rmem: "10240 87380 12582912"
+  net.ipv4.tcp_wmem: "10240 87380 12582912"
+  net.ipv4.tcp_congestion_control: westwood
+  net.core.default_qdisc: fq
+  net.ipv4.tcp_fastopen: 3
+  net.ipv4.tcp_timestamps: 0
+  net.ipv4.tcp_sack: 1
+  # This is a legacy option, it has no effect anymore.
+  # net.ipv4.tcp_low_latency: 1
+  # Enable fast recycling TIME-WAIT sockets
+  # net.ipv4.tcp_tw_recycle: 1
+  net.ipv4.tcp_tw_reuse: 1
+  # don't cache ssthresh from previous connection
+  net.ipv4.tcp_no_metrics_save: 1
+  net.ipv4.tcp_moderate_rcvbuf: 1
+  # kernel Tunes
+  kernel.timer_migration: 0
+  kernel.hung_task_timeout_secs: 30
+  # A suggested value for pid_max is 1024 * <# of cpu cores/threads in system>
+  kernel.pid_max: 49152
+  # vm.tuning
+  vm.swappiness: 30
+  vm.stat_interval: 10
+  vm.dirty_ratio: 40
+  vm.dirty_background_ratio: 10
+  vm.min_free_kbytes: 3000000
+  vm.dirty_expire_centisecs: 36000
+  vm.dirty_writeback_centisecs: 3000
+  vm.dirtytime_expire_seconds: 43200
+
+agave_validator: false
+
+jito_validator: false
+jito_urls_site: "newyork"
+jito_commission_bps: 800
 
 #validator info
 validator_description: "Bootstrapped with https://sv-manager.thevalidators.io"
@@ -49,6 +106,7 @@ telegraf_database: v_metrics
 telegraf_urls: http://influx.thevalidators.io:8086
 telegraf_username: v_user
 telegraf_password: thepassword
+
 
 # Sys Tuning
 sysctl_params:
