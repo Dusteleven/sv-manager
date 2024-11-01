@@ -3,7 +3,7 @@ run-name: Add tag for agent-develop branch
 on:
   push:
     branches:
-      - agent-develop
+      - main-dev
 
 env:
   REGISTRY: ghcr.io
@@ -24,10 +24,10 @@ jobs:
       - run: | 
           git config --global user.email "${{ github.event.commits[0].author.email }}"
           git config --global user.name "${{ github.event.commits[0].author.name }}"
-          git tag -d agent-dev
-          git push --delete origin agent-dev
+          git tag -d main-develop
+          git push --delete origin main-develop
           git tag agent-dev ${{ env.commit_part }}
-          git push origin agent-dev
+          git push origin main-develop
 
   build-container:
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:agent-dev
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-dev
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
