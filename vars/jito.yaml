@@ -1,4 +1,6 @@
 validator_binary: "{% if validator_version.split('.') | map('int') | list > '2.0.0'.split('.') | map('int') | list %}agave-validator{% else %}solana-validator{% endif %}"
 validator_install_binary: "{% if validator_version.split('.') | map('int') | list > '2.0.0'.split('.') | map('int') | list %}agave-install{% else %}solana-install{% endif %}"
 install_script_url: "https://raw.githubusercontent.com/jito-foundation/jito-solana/v{{ validator_version }}-jito/install/{% if validator_version.split('.') | map('int') | list > '2.0.0'.split('.') | map('int') | list %}agave-install-init.sh{% else %}solana-install-init.sh{% endif %}"
+github_source_tag: "v{{ validator_version }}-jito"
+github_source: "https://github.com/jito-foundation/jito-solana.git"
 jito_validator: true

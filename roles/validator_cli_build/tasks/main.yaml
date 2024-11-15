@@ -1,0 +1,95 @@
+---
+
+- name: set force install fact
+  set_fact:
+    force: "{{ force | default('false')  }}"
+    validator_bin_path: "{{ validator_app_path }}/releases/{{ solana_version }}-jito"
+  tags:
+    - cli
+    - cli.install
+    - cli.update
+    - cli.make
+
+- name: Load config
+  include_vars:
+    file: "{{ sv_manager_config_path }}"
+  become: yes
+
+- name: check validator bin installed
+  stat:
+    path: "{{ validator_bin_path }}/bin/{{ validator_binary }}"
+  register: validator_bin
+  tags:
+    - cli
+    - cli.install
+    - cli.update
+    - cli.make
+
+- name: build validator binary
+  import_tasks: build.yaml
+  tags:
+    - cli
+    - cli.install
+  when: force or not validator_bin.stat.exists
+
+- name: install solana-snapshot-finder
+  import_tasks: solana_snapshot_finder.yaml
+  tags:
+    - cli
+    - cli.snapshot-finder
+  when: with_snapshot_finder
+
+- name: change ownership of a directory
+  file:
+    path: "{{ validator_app_path }}"
+    state: directory
+    recurse: yes
+    owner: "{{ validator_user }}"
+    group: "{{ validator_user }}"
+  tags:
+    - cli
+    - cli.install
+
+- name: remove old symbolic link
+  file:
+    path: "{{ validator_app_path }}/active_release"
+    state: absent
+  tags:
+    - cli
+    - cli.install
+
+- name: create new symbolic link
+  file:
+    src: "{{ validator_bin_path }}"
+    dest: "{{ validator_app_path }}/active_release"
+    owner: "{{ validator_user }}"
+    group: "{{ validator_user }}"
+    state: link
+  tags:
+    - cli
+    - cli.install
+
+- name: Create validator path profile file
+  template:
+    src: validator.sh
+    dest: /etc/profile.d/validator.sh
+    mode: 0644
+    owner: root
+    group: root
+  tags:
+    - cli
+    - cli.binary-path.profile
+
+#- name: "Add {{ solana_bin_path }}/active_release/bin to PATH if does not exist"
+#  lineinfile:
+#    path: /etc/environment
+#    line: 'PATH="$PATH:{{ solana_bin_path }}/active_release/bin"'
+#    insertafter: EOF
+#  when: lookup('file', '/etc/environment') is not search('^\s*PATH\s*=')
+#
+#- name: 'Add {{ solana_bin_path }}/active_release/bin to PATH'
+#  lineinfile:
+#    path: /etc/environment
+#    regexp: 'PATH=(["])((?!.*?{{ solana_bin_path }}/active_release/bin).*?)(["])$'
+#    line: 'PATH=\1\2:{{ solana_bin_path }}/active_release/bin\3'
+#    backrefs: yes
