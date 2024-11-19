@@ -26,7 +26,7 @@ jobs:
           git config --global user.name "${{ github.event.commits[0].author.name }}"
           git tag -d main-develop
           git push --delete origin main-develop
-          git tag agent-dev ${{ env.commit_part }}
+          git tag main-develop ${{ env.commit_part }}
           git push origin main-develop
 
   build-container:
