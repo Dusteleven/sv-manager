@@ -24,8 +24,7 @@ jobs:
       - run: | 
           git config --global user.email "${{ github.event.commits[0].author.email }}"
           git config --global user.name "${{ github.event.commits[0].author.name }}"
-          if git tag --list | grep "^main-develop";then git tag -d main-develop;fi
-          git push --delete origin main-dev
+          if git tag --list | grep "^main-develop";then git tag -d main-develop && git push --delete origin main-develop;fi
           git tag main-develop ${{ env.commit_part }}
           git push origin main-develop
 
